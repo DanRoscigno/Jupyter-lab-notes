@@ -136,6 +136,8 @@ mv _hello.ipynb hello.ipynb
 ```
 
 ```bash
+cd /home/ubuntu/quarto/quarto-example # Replace with your path
+source .venv/bin/activate
 python3 -m jupyter lab hello.ipynb
 ```
 
