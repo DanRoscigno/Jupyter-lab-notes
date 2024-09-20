@@ -1,2 +1,144 @@
-# Jupyter-lab-notes
+# Jupyter lab notes
+
 Deploying Jupyter lab, sample docs, ...
+
+## Deploying in AWS Cheatsheet
+
+Deploying Jupyter Lab in AWS is similar to deploying locally, with these extra steps:
+- Deploy a free-tier AWS EC2 Ubuntu instance
+- Serve via HTTPS
+- Set a password
+- Skip browser launch
+- Create a self-signed SSL cert
+
+I will not write details unless the step seems unusual
+
+### Free-tier EC2 instance
+
+Deploy an EC2 instance, I am using a free-tier machine, YMMV. I am using Ubuntu.
+- Create an EC2 Ubuntu instance
+- Create a security group inbound rule. I don't like using default ports, so I switched to `8942`. Here is mine:
+  
+  <img width="705" alt="image" src="https://github.com/user-attachments/assets/e97d7bf7-1a31-49cf-af7d-40c64443c6ac">
+
+### Connect to the instance
+
+I use ssh from my workstation, using the PEM cert generated during instance creation:
+
+```bash
+ssh -i ~/.ssh/JupyterEC2.pem ubuntu@ec2-3-139-59-249.us-east-2.compute.amazonaws.com
+```
+
+### SSL cert
+
+Generate a cert for the Jupyter Lab server, and set the ownership
+```bash
+cd
+sudo openssl req -x509 -nodes -days 365 \
+-newkey rsa:2048 \
+-keyout ssl_cert.pem \
+-out ssl_cert.pem
+
+sudo chown $USER:$USER ssl_cert.pem
+```
+### Set up the environment
+
+
+
+### Quarto
+
+You may not need Quarto, I am using it to generate HTML from my Notebook (`.ipynb`) files. If you don't plan to use Quarto, then skip this.
+
+```bash
+mkdir quarto
+cd quarto
+
+# Check the Quarto site for the version
+wget https://github.com/quarto-dev/quarto-cli/releases/download/v1.5.57/quarto-1.5.57-linux-amd64.deb
+
+sudo apt install ./quarto-1.5.57-linux-amd64.deb
+rm ./quarto-1.5.57-linux-amd64.deb
+```
+
+### Make sure that Python 3 is available
+
+```bash
+python3 --version
+```
+
+### Install Jupyter Lab
+
+Use a Python virtual environment (`venv`)
+
+```bash
+mkdir JupyterLab
+cd JupyterLab
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Install Node.js and Node Version Manager
+
+```bash
+sudo apt install nodejs python3.12-venv
+wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+nvm install 21
+nvm use 21
+```
+Finally, install Jupyter Lab:
+
+```bash
+python3 -m pip install jupyter jupyterlab matplotlib plotly
+```
+
+#### Create a Jupyter Lab configuration
+
+```bash
+mkdir -p /home/ubuntu/.jupyter/
+
+cat << EOF > /home/ubuntu/.jupyter/jupyter_lab_config.py
+c = get_config()  #noqa
+# listen on all interfaces
+c.ServerApp.ip = '0.0.0.0'
+# use non-standard port
+c.ServerApp.port = 8942
+# don't try to open a browser
+c.ServerApp.open_browser = False
+# SSL
+c.ServerApp.certfile = u'/home/ubuntu/ssl_cert.pem'
+# hash of password
+# The password hash does NOT go in here, running `jupyter lab password` will generate a separate JSON file
+EOF
+```
+
+#### Generate a password for Jupyter Lab
+
+```bash
+jupyter lab password
+```
+
+#### Start Jupyter Lab
+
+Grab a sample notebook to test with
+
+```bash
+wget https://quarto.org/docs/get-started/hello/_hello.ipynb
+mv _hello.ipynb hello.ipynb
+```
+
+```bash
+python3 -m jupyter lab hello.ipynb
+```
+
+When you start Jupyter Lab you will see logging in the terminal. One thing that you are looking for is the endpoint where the server is running. Look for:
+
+- `https`
+- Some kind of hostname, in this example it is `ip-172-31-38-116`
+- The port number that you used in the security group inbound rule (`8942` in my case)
+
+```bash
+[I 2024-09-20 14:25:47.955 ServerApp] Jupyter Server 2.14.2 is running at:
+[I 2024-09-20 14:25:47.955 ServerApp] https://ip-172-31-38-116:8942/lab
+[I 2024-09-20 14:25:47.955 ServerApp]     https://127.0.0.1:8942/lab
+[I 2024-09-20 14:25:47.955 ServerApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+```
