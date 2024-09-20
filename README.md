@@ -15,11 +15,13 @@ I will not write details unless the step seems unusual
 
 ### Free-tier EC2 instance
 
-Deploy an EC2 instance, I am using a free-tier machine, YMMV. I am using Ubuntu.
-- Create an EC2 Ubuntu instance
+Deploy an EC2 instance, I am using a free-tier machine, you might need something larger depending on your data and computations. These notes are Ubuntu-specific, but you should be able to figure out the differences if you need to use a different operating system.
+- Create an EC2 Ubuntu instance using a free-tier machine type
+- One of the early steps will be labeled **Key pair (login)**. I always use a **key pair**. In the `ssh` step below, the key pair is used to authenticate to the system. I also store that key pair in my password manager.
 - Create a security group inbound rule. I don't like using default ports, so I switched to `8942`. Here is mine:
   
   <img width="705" alt="image" src="https://github.com/user-attachments/assets/e97d7bf7-1a31-49cf-af7d-40c64443c6ac">
+- Accept the defaults for the rest of the steps
 
 ### Connect to the instance
 
@@ -68,7 +70,7 @@ python3 --version
 
 ### Install Jupyter Lab
 
-Use a Python virtual environment (`venv`)
+Use a Python virtual environment (`venv`). There is a link at the bottom of this page about the merits of virtual environments.
 
 ```bash
 mkdir JupyterLab
@@ -84,7 +86,12 @@ sudo apt install nodejs python3.12-venv
 wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 nvm install 21
 nvm use 21
+node -v > .nvmrc
 ```
+> Note:
+>
+> If you use this instance for anything else, then you might want to have the Node.js version automatically set based on the current working directory. See the [`nvm-sh`](https://github.com/nvm-sh/nvm?tab=readme-ov-file#bash) GitHub repository for details.
+
 Finally, install Jupyter Lab:
 
 ```bash
