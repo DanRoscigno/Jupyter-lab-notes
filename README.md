@@ -153,3 +153,37 @@ When you start Jupyter Lab you will see logging in the terminal. One thing that 
 [I 2024-09-20 14:25:47.955 ServerApp]     https://127.0.0.1:8942/lab
 [I 2024-09-20 14:25:47.955 ServerApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
 ```
+### Start Jupyter Lab at boot
+
+Running Jupyter Lab from an ssh session is fine as long as the ssh session runs. Running Jupyter Lab from a service removes the dependency on an active ssh session, and starts the service at server boot.
+
+#### Create a service file
+
+```bash
+sudo cat << EOF > /etc/systemd/system/jupyterlab.service
+[Unit]
+Description=Jupyter Lab
+
+[Service]
+Type=simple
+PIDFile=/run/jupyter.pid
+ExecStart=/bin/bash -i -c "source .venv/bin/activate;python3 -m jupyter lab"
+User=ubuntu
+WorkingDirectory=/home/ubuntu/quarto/quarto-example
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+```
+
+#### Enable and start the service
+
+```bash
+systemctl enable jupyterlab.service
+systemctl daemon-reload
+systemctl status jupyterlab.service
+systemctl start jupyterlab.service
+systemctl status jupyterlab.service
+```
