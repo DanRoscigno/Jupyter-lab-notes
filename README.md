@@ -187,3 +187,7 @@ systemctl status jupyterlab.service
 systemctl start jupyterlab.service
 systemctl status jupyterlab.service
 ```
+
+#### Browse
+
+[Jupyter Lab](https://ec2-3-139-59-249.us-east-2.compute.amazonaws.com:8942/lab)
